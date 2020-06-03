@@ -32,7 +32,6 @@ public class LqdDefaultListableBeanFactory implements LqdBeanFactory, LqdBeanFac
     @Override
     public Map<String, LqdBeanDefinition> registerBeanDefinitions(List<LqdBeanDefinition> beanDefinitions) {
         for (LqdBeanDefinition beanDefinition : beanDefinitions) {
-//            beanDefinitionMap.put(beanDefinition.getBeanClassName(), beanDefinition);
             beanDefinitionMap.put(beanDefinition.getBeanFactoryName(), beanDefinition);
         }
         return beanDefinitionMap;
@@ -43,6 +42,7 @@ public class LqdDefaultListableBeanFactory implements LqdBeanFactory, LqdBeanFac
     }
 
     private enum LQDDefaultListableBeanFactoryEnum {
+        /** 获取对象实例 */
         INSTANCE;
         private final LqdDefaultListableBeanFactory beanFactory = new LqdDefaultListableBeanFactory();
     }

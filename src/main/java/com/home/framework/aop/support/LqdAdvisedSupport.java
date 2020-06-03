@@ -1,5 +1,6 @@
 package com.home.framework.aop.support;
 
+import com.home.framework.aop.aspect.LqdMethodBeforeAdviceInterceptor;
 import com.home.framework.aop.config.LqdAopConfig;
 import com.home.framework.aop.aspect.LqdAfterReturningAdviceInterceptor;
 import com.home.framework.aop.aspect.LqdAfterThrowingAdviceInterceptor;
@@ -38,7 +39,6 @@ public class LqdAdvisedSupport {
 
     public void setTargetClass(Class<?> targetClass) {
         this.targetClass = targetClass;
-        parse();
     }
 
     private void parse() {
@@ -58,12 +58,17 @@ public class LqdAdvisedSupport {
             }
             // 把方法封装成执行器链
             for (Method method : this.targetClass.getDeclaredMethods()) {
+                Class<?>[] interfaces = targetClass.getInterfaces();
+                Method parentMethod = method;
+                if (interfaces.length > 0) {
+                    parentMethod = interfaces[0].getMethod(method.getName(), method.getParameterTypes());
+                }
                 // 执行器链
                 List<Object> chain = new ArrayList<>(4);
                 String aspectBefore = config.getAspectBefore();
                 if (StringUtils.isNotEmpty(aspectBefore)) {
                     Method aspectMethod = aspectMethodMap.get(aspectBefore);
-                    chain.add(new LqdAfterReturningAdviceInterceptor(aspectMethod, aspect));
+                    chain.add(new LqdMethodBeforeAdviceInterceptor(aspectMethod, aspect));
                 }
                 String aspectAfter = config.getAspectAfter();
                 if (StringUtils.isNotEmpty(aspectAfter)) {
@@ -75,7 +80,7 @@ public class LqdAdvisedSupport {
                     Method aspectMethod = aspectMethodMap.get(afterThrowing);
                     chain.add(new LqdAfterThrowingAdviceInterceptor(aspectMethod, aspect).setThrowingName(config.getAspectAfterThrowingName()));
                 }
-                methodCache.put(method, chain);
+                methodCache.put(parentMethod, chain);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -88,7 +93,11 @@ public class LqdAdvisedSupport {
      */
     public boolean pointCutMatch() {
         pointCutPattern = Pattern.compile(config.getPointCut());
-        return pointCutPattern.matcher(this.targetClass.toString()).matches();
+        boolean match = pointCutPattern.matcher(this.targetClass.toString()).matches();
+        if (match) {
+            parse();
+        }
+        return match;
     }
     /**
      * 获取到方法上的所有Interceptor列表

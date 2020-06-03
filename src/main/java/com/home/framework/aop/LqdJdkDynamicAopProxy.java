@@ -22,13 +22,13 @@ public class LqdJdkDynamicAopProxy implements LqdAopProxy, InvocationHandler {
     }
 
     @Override
-    public Object getProxy() {
+    public <T> T getProxy() {
         return getProxy(this.advised.getTargetClass().getClassLoader());
     }
 
     @Override
-    public Object getProxy(ClassLoader classLoader) {
-        return Proxy.newProxyInstance(classLoader, this.advised.getClass().getInterfaces(), this);
+    public <T> T getProxy(ClassLoader classLoader) {
+        return (T)Proxy.newProxyInstance(classLoader, this.advised.getTargetClass().getInterfaces(), this);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class LqdJdkDynamicAopProxy implements LqdAopProxy, InvocationHandler {
         // 拦截器链
         List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, this.advised.getTargetClass());
         // 调用链设计模式
-        LqdReflectiveMethodInvocation methodInvocation = new LqdReflectiveMethodInvocation(proxy, null,
+        LqdReflectiveMethodInvocation methodInvocation = new LqdReflectiveMethodInvocation(proxy, this.advised.getTargetResource(),
                 method, args, this.advised.getTargetClass(), chain);
         // 执行拦截器链
         return methodInvocation.proceed();

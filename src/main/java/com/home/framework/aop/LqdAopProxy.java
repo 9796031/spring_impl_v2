@@ -10,12 +10,12 @@ public interface LqdAopProxy {
      * 获取代理对象
      * @return 对象实例
      */
-    Object getProxy();
+    <T> T getProxy();
 
     /**
      * 根据classLoader获取代理对象实例
      * @param classLoader classLoader
      * @return 对象实例
      */
-    Object getProxy(ClassLoader classLoader);
+    <T> T getProxy(ClassLoader classLoader);
 }

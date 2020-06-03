@@ -30,7 +30,7 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
     /**
      * 配置信息
      */
-    private String configLocation;
+    private final String configLocation;
 
     private static final String POINT_CUT = "pointCut";
 
@@ -73,7 +73,6 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
         this.beanDefinitionMap = LqdDefaultListableBeanFactory.getInstance().registerBeanDefinitions(lqdBeanDefinitions);
         // 3. 扫秒包,实例对象
         doCreateBean(beanDefinitionMap);
-
     }
 
     private void doCreateBean(Map<String, LqdBeanDefinition> beanDefinitionMap) {
@@ -81,23 +80,19 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
             LqdBeanDefinition definition = entry.getValue();
             if (!definition.isLazyInit()) {
                 String beanClassName = definition.getBeanClassName();
-                Class<?> clazz = null;
                 try {
-                    clazz = Class.forName(beanClassName);
+                    Class<?> clazz = Class.forName(beanClassName);
                     if (clazz.isInterface()) {continue;}
                     if (clazz.isAnnotation()) {continue;}
+                    getBean(clazz);
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
-                if (clazz.isInterface()) {
-
-                }
-                getBean(clazz);
             }
         }
     }
 
-    public Object getBean(Class<?> clazz) {
+    public <T> T getBean(Class<T> clazz) {
         String beanClassName = clazz.getName();
         LqdBeanDefinition beanDefinition = beanDefinitionMap.get(beanClassName);
         // 初始化bean
@@ -105,7 +100,7 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
         if (bw == null) {return null;}
         // 注入bean
         populateBean(beanClassName, beanDefinition, bw);
-        return bw.getWrappedInstance();
+        return (T) bw.getWrappedInstance();
     }
 
     /**
@@ -144,16 +139,14 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
             } else {
                 Class<?> clazz = Class.forName(beanDefinition.getBeanClassName());
                 o = clazz.newInstance();
-                // 设置代理
+                // AOP //设置代理
                 LqdAdvisedSupport advised = instantiationAopConfig(beanDefinition);
                 advised.setTargetClass(clazz);
                 advised.setTargetResource(o);
                 // 如果符合pointCut规则, 则创建代理对象
                 if (advised.pointCutMatch()) {
-                    // TODO 加入代理后 在注入时会出问题
-                    //o = createProxy(advised).getProxy();
+                    o = createProxy(advised).getProxy();
                 }
-
                 singletonObjects.put(beanClassName, o);
                 singletonObjects.put(beanDefinition.getBeanFactoryName(), o);
             }
@@ -242,6 +235,9 @@ public class LqdApplicationContext extends LqdAbstractApplicationContext {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            String name = field.getType().getName();
+            System.out.println(name);
         }
     }
 
